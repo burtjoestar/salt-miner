@@ -33,12 +33,15 @@ MongoClient.connect(saltStateMineShaftUri, null, function(err, db) {
     const client = restify.createJSONClient({
         url: saltyApi
     });
-    console.log('connected');
+
+    if (err) {
+        logger.error('Error connecting to MongoDB Instance', err);
+    }
 
     logger.info('Connected to MongoDB Instance');
 
     socket.on('connect_error', function(error) {
-        logger.info('Unable to open socket to: ' + saltyIo, error);
+        logger.error('Unable to open socket to: ' + saltyIo, error);
         closeDb(db);
     });
 
@@ -54,6 +57,7 @@ MongoClient.connect(saltStateMineShaftUri, null, function(err, db) {
             logger.info('Received message, requesting state from ' + saltyApi + statePath);
             client.get(statePath, function(err, req, res, state) {
                 logger.info('Received state');
+
                 if (!isPersisting && state && state.status && (state.status === "1" || state.status === "2")) {
                     isPersisting = true;
                     logger.info('DB - state persisting...', state);
@@ -61,7 +65,7 @@ MongoClient.connect(saltStateMineShaftUri, null, function(err, db) {
                         logger.info('DB - state persisted successful');
                         isPersisting = false;
                     }).catch(function(error) {
-                        logger.info('DB - Error persisting state', error);
+                        logger.error('DB - Error persisting state', error);
                     });
                 }
             });
